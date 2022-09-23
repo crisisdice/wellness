@@ -8,12 +8,10 @@
 #define START "startDate=\""
 #define END "endDate=\""
 
-void ptTst(char* c);
+int parse();
+bool inNode(char tag[], char c, int* index);
 
 int main() {
-  char f = 'f';
-  ptTst(&f);
-  printf("%c", f);
   return parse();
 }
 
@@ -21,14 +19,11 @@ int parse() {
   char c;
   FILE *fptr;
 
-  int nodeLength = strlen(TYPE);
   int nodeIndex = 0;
+  int startIndex = 0;
+  int endIndex = 0;
 
   int startLength = strlen(START);
-  int startIndex = 0;
-
-  int endLength = strlen(END);
-  int endIndex = 0;
   
   if ((fptr = fopen(PATH, "r")) == NULL) {
     printf("Error opening file");
@@ -36,12 +31,9 @@ int parse() {
   }
   
   while((c = fgetc(fptr)) != EOF) {
-    if (nodeIndex == (nodeLength - 1)) {
-      if (c == '\n') {
-        nodeIndex = 0;
-        continue;
-      }
+    bool inNd = inNode(TYPE, c, &nodeIndex);
 
+    if (inNd) {
       if (startIndex == startLength) {
         if (c == '"') {
           startIndex = 0;
@@ -60,12 +52,6 @@ int parse() {
       startIndex = 0;
       continue;
     }
-
-    if (c == TYPE[nodeIndex]) {
-      nodeIndex += 1;
-      continue;
-    }
-    nodeIndex = 0;
   }
 
   fclose(fptr);
@@ -74,14 +60,24 @@ int parse() {
 }
 
 bool in(char tag[], char end, char c, int* index) {
+  int length = strlen(tag);
+
   if (c == end) {
+    *index = 0;
     return false;
   }
-  bool inTag = c == tag[*index];
-  if (inTag) {
-    *index += 1;
+
+  if (*index == length) {
+    return true;
   }
-  return inTag;
+
+  if (c == tag[*index]) {
+    *index += 1;
+    return false;
+  }
+
+  *index = 0;
+  return false;
 }
 
 bool inNode(char tag[], char c, int* index) {
