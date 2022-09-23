@@ -5,26 +5,38 @@
 
 #define PATH "data/test.txt"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
+// TODO refactor \" to be in inTag()
 #define START "startDate=\""
 #define END "endDate=\""
 
-int parse();
-bool inNode(char tag[], char c, int* index);
-bool inTag(char tag[], char c, int* index);
-
-int main() {
-  return parse();
+bool in(char tag[], char end, char c, int* index) {
+  if (*index == strlen(tag)) {
+    if (c == end) {
+      *index = 0;
+      printf("\n");
+      return false;
+    }
+    return true;
+  }
+  *index = c == tag[*index] ? *index + 1 : 0;
+  return false;
 }
 
-int parse() {
+bool inNode(char tag[], char c, int* index) {
+  return in(tag, '\n', c, index);
+}
+
+bool inTag(char tag[], char c, int* index) {
+  return in(tag, '"', c, index);
+}
+
+int main() {
   char c;
   FILE *fptr;
 
   int nodeIndex = 0;
   int startIndex = 0;
   int endIndex = 0;
-
-  int startLength = strlen(START);
   
   if ((fptr = fopen(PATH, "r")) == NULL) {
     printf("Error opening file");
@@ -32,61 +44,19 @@ int parse() {
   }
   
   while((c = fgetc(fptr)) != EOF) {
-    bool inStep = inNode(TYPE, c, &nodeIndex);
-    //bool inStart = inTag(START, c, &startIndex);
+    if (inNode(TYPE, c, &nodeIndex)) {
+      bool inStart = inTag(START, c, &startIndex);
+      bool inEnd = inTag(END, c, &endIndex);
 
-    if (inStep) {
-      if (startIndex == startLength) {
-        if (c == '"') {
-          startIndex = 0;
-          printf("\n");
-          continue;
-        }
+      if (inStart) {
         printf("%c", c);
-        continue;
       }
-
-      if (c == START[startIndex]) {
-        startIndex += 1;
-        continue;
+      if (inEnd) {
+        printf("%c", c);
       }
-
-      startIndex = 0;
-      continue;
     }
   }
 
   fclose(fptr);
-
   return 0;
 }
-
-bool in(char tag[], char end, char c, int* index) {
-  int length = strlen(tag);
-
-  if (c == end) {
-    *index = 0;
-    return false;
-  }
-
-  if (*index == length) {
-    return true;
-  }
-
-  if (c == tag[*index]) {
-    *index += 1;
-    return false;
-  }
-
-  *index = 0;
-  return false;
-}
-
-bool inNode(char tag[], char c, int* index) {
-  return in (tag, '\n', c, index);
-}
-
-bool inTag(char tag[], char c, int* index) {
-  return in (tag, '\"', c, index);
-}
-
