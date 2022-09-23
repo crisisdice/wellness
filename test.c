@@ -10,6 +10,7 @@
 
 int parse();
 bool inNode(char tag[], char c, int* index);
+bool inTag(char tag[], char c, int* index);
 
 int main() {
   return parse();
@@ -31,9 +32,10 @@ int parse() {
   }
   
   while((c = fgetc(fptr)) != EOF) {
-    bool inNd = inNode(TYPE, c, &nodeIndex);
+    bool inStep = inNode(TYPE, c, &nodeIndex);
+    //bool inStart = inTag(START, c, &startIndex);
 
-    if (inNd) {
+    if (inStep) {
       if (startIndex == startLength) {
         if (c == '"') {
           startIndex = 0;
