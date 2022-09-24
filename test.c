@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+
+#include <uthash.h>
 
 #define PATH "data/test.txt"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
@@ -10,11 +13,13 @@
 #define START "startDate=\""
 #define END "endDate=\""
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+struct duration {
+  char date[25];
+  int minutes;
+  UT_hash_handle hh;
+};
 
+void test(struct duration *durations);
 
 int date(char timestamp[]) {
   struct tm tm;
@@ -28,7 +33,7 @@ bool in(char tag[], char end, char c, int* index) {
   if (*index == strlen(tag)) {
     if (c == end) {
       *index = 0;
-      printf("\n");
+      //printf("\n");
       return false;
     }
     return true;
@@ -44,12 +49,6 @@ bool inNode(char tag[], char c, int* index) {
 bool inTag(char tag[], char c, int* index) {
   return in(tag, '"', c, index);
 }
-
-/*
-
-   { [date]: duration } : { [string]: int }
-
- */
 
 int main() {
   char c;
@@ -68,7 +67,8 @@ int main() {
   int endFillIndex = 0;
   char start[26];
   char end[26];
-  // map durations = {}
+
+  struct duration *durations = NULL;
   
   while((c = fgetc(fptr)) != EOF) {
     if (inNode(TYPE, c, &nodeIndex)) {
@@ -76,34 +76,66 @@ int main() {
       bool inEnd = inTag(END, c, &endIndex);
 
       if (startFillIndex == 25 && endFillIndex == 25) {
+        startFillIndex = 0;
+        endFillIndex = 0;
+
+        // TODO filter nodes
+        bool dateNotInRange = false;
+
+        if (dateNotInRange) {
+          continue;
+        }
+
         start[25] = '\0';
         end[25] = '\0';
 
-        int difference = date(end) - date(start);
-        printf("%d\n", difference);
-        
-        // durations[start] += difference
+        struct duration *dur;
 
-        startFillIndex = 0;
-        endFillIndex = 0;
+        HASH_FIND_STR(durations, start, dur);
+
+        int difference = date(end) - date(start);
+
+        //printf(start);
+
+        if (dur) {
+          dur->minutes += difference;
+          HASH_ADD_STR(durations, date, dur);
+        } else {
+          dur = (struct duration *)malloc(sizeof *dur);
+          strcpy(dur->date, start);
+          dur->minutes = difference;
+          HASH_ADD_STR(durations, date, dur);
+        }
       }
 
       if (inStart) {
-        printf("%c", c);
+        //printf("%c", c);
         start[startFillIndex] = c;
         startFillIndex += 1;
       }
 
       if (inEnd) {
-        printf("%c", c);
+        //printf("%c", c);
         end[endFillIndex] = c;
         endFillIndex += 1;
       }
-
       
     }
   }
-
+  test(durations);
   fclose(fptr);
   return 0;
+}
+
+// TODO remove
+void test(struct duration *durations) {
+  struct duration *dur;
+
+  HASH_FIND_STR(durations, "2018-08-06 17:19:12 +0200", dur);
+
+  if (dur == NULL) {
+    printf("whoops");
+  }
+
+  printf("%d\n", dur->minutes);
 }
