@@ -33,7 +33,6 @@ bool in(char tag[], char end, char c, int* index) {
   if (*index == strlen(tag)) {
     if (c == end) {
       *index = 0;
-      //printf("\n");
       return false;
     }
     return true;
@@ -53,22 +52,25 @@ bool inTag(char tag[], char c, int* index) {
 int main() {
   char c;
   FILE *fptr;
+  struct duration *durations = NULL;
 
+  // indices for chars of tags
   int nodeIndex = 0;
   int startIndex = 0;
   int endIndex = 0;
   
+  // indices for chars of tag contents
+  int startFillIndex = 0;
+  int endFillIndex = 0;
+
+  // strs for start and end date of node
+  char start[26];
+  char end[26];
+
   if ((fptr = fopen(PATH, "r")) == NULL) {
     printf("Error opening file");
     exit(1);
   }
-
-  int startFillIndex = 0;
-  int endFillIndex = 0;
-  char start[26];
-  char end[26];
-
-  struct duration *durations = NULL;
   
   while((c = fgetc(fptr)) != EOF) {
     if (inNode(TYPE, c, &nodeIndex)) {
@@ -95,8 +97,6 @@ int main() {
 
         int difference = date(end) - date(start);
 
-        //printf(start);
-
         if (dur) {
           dur->minutes += difference;
           HASH_ADD_STR(durations, date, dur);
@@ -109,17 +109,14 @@ int main() {
       }
 
       if (inStart) {
-        //printf("%c", c);
         start[startFillIndex] = c;
         startFillIndex += 1;
       }
 
       if (inEnd) {
-        //printf("%c", c);
         end[endFillIndex] = c;
         endFillIndex += 1;
       }
-      
     }
   }
   test(durations);
