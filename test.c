@@ -12,6 +12,7 @@
 // TODO refactor \" to be in inTag()
 #define START "startDate=\""
 #define END "endDate=\""
+#define CUTOFF ""
 
 struct duration {
   char date[25];
@@ -28,6 +29,10 @@ int date(char timestamp[]) {
   return (tm.tm_hour * 60) + tm.tm_min;
 }
 
+bool dateIsBefore(char test[], char cutoff[]) {
+  // TODO
+  return false;
+}
 
 bool in(char tag[], char end, char c, int* index) {
   if (*index == strlen(tag)) {
@@ -67,6 +72,9 @@ int main() {
   char start[26];
   char end[26];
 
+  // null terminated strings
+  start[25] = end[25] = '\0';
+
   if ((fptr = fopen(PATH, "r")) == NULL) {
     printf("Error opening file");
     exit(1);
@@ -77,35 +85,23 @@ int main() {
       bool inStart = inTag(START, c, &startIndex);
       bool inEnd = inTag(END, c, &endIndex);
 
+      // dates filled so check if in range and write difference to map
       if (startFillIndex == 25 && endFillIndex == 25) {
-        startFillIndex = 0;
-        endFillIndex = 0;
-
-        // TODO filter nodes
-        bool dateNotInRange = false;
-
-        if (dateNotInRange) {
+        startFillIndex = endFillIndex = 0;
+        if (dateIsBefore(start, CUTOFF)) {
           continue;
         }
 
-        start[25] = '\0';
-        end[25] = '\0';
-
         struct duration *dur;
-
         HASH_FIND_STR(durations, start, dur);
 
-        int difference = date(end) - date(start);
-
-        if (dur) {
-          dur->minutes += difference;
-          HASH_ADD_STR(durations, date, dur);
-        } else {
+        if (dur == NULL) {
           dur = (struct duration *)malloc(sizeof *dur);
           strcpy(dur->date, start);
-          dur->minutes = difference;
-          HASH_ADD_STR(durations, date, dur);
         }
+
+        dur->minutes += (date(end) - date(start));
+        HASH_ADD_STR(durations, date, dur);
       }
 
       if (inStart) {
