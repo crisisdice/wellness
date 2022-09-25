@@ -8,14 +8,11 @@
 
 #include <uthash.h>
 
-#define PATH "data/fixed.xml"
+#define PATH "data/export.xml"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
 // TODO refactor \" to be in inTag()
 #define START "startDate=\""
 #define END "endDate=\""
-// TODO pass as argument to main
-#define CUTOFF "2022-09-19"
-
 
 /* map */
 struct duration {
@@ -63,8 +60,7 @@ bool inTag(char tag[], char c, int* index) {
 }
 
 /* json */
-void format(char date[], int seconds) {
-  struct timeval now;
+void format(char date[], int seconds, int ts) {
   char template[] = "{ "
   "\"timestamp\": \"%sT12:00:00\","
   "\"eventDescriptor\": {"
@@ -75,25 +71,37 @@ void format(char date[], int seconds) {
   "\"utcOffset\": 120"
   " }\n";
 
-  gettimeofday(&now, NULL);
-  long int ts = (long int)now.tv_sec * 1000 + now.tv_usec / 1000;
   printf(template, date, seconds / 60, ts);
 }
 
 void printAll(struct duration *allDurations) {
   struct duration *dur;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  long int ts = (long int)now.tv_sec * 1000 + now.tv_usec / 1000;
 
   for (dur = allDurations; dur != NULL; dur = dur->hh.next) {
-    format(dur->date, dur-> seconds);
+    ts += 1;
+    format(dur->date, dur-> seconds, ts);
   }
 }
 
-int main() {
+int main(int argc, char **argv) {
   FILE *filePointer;
   char currentChar;
 
+  if (argc == 1) {
+    printf("No cutoff specifiedi\n");
+    exit(1);
+  }
+
   struct duration *allDurations = NULL;
-  struct tm cutoff = toTm(CUTOFF);
+  struct tm cutoff = toTm(argv[1]);
+
+  if (mktime(&cutoff) < 0) {
+    printf("Cutoff must be YYYY-MM-DD\n");
+    exit(1);
+  }
 
   // indices for chars of tags
   int nodeIndex, startIndex, endIndex;
@@ -125,7 +133,7 @@ int main() {
         startDate = toTm(start);
         
         // is before cutoff
-        if (diff(startDate, cutoff) <= 0) {
+        if (diff(startDate, cutoff) < 0) {
           continue;
         }
 

@@ -1,3 +1,5 @@
+CUTOFF="2022-09-20"
+
 PW_HASH='YWxleGFuZGVyZGFpbHkwMDFAZ21haWwuY29tOkhhbGwwVzNsdCE='
 
 URL='https://amdocs.globalfitnesschallenge.com/v1'
@@ -11,7 +13,8 @@ TOKEN=$(echo $HEADERS | grep -oP '(?<=Set-Cookie: jwtToken=)[^;]*')
 XSRF=$(echo $HEADERS | grep -oP '(?<=Set-Cookie: XSRF-TOKEN=)[^;]*')
 COOKIE="jwtToken=$TOKEN"
 
-declare -a ACTIONS=($(./a.out))
+IFS=$'\n'
+declare -a ACTIONS=($(./a.out $CUTOFF))
 
 for BODY in "${ACTIONS[@]}"; do
   echo $BODY | http POST $URL$POST_ENDPOINT "Authorization: Bearer $TOKEN" "Cookie: $COOKIE" "Origin: $URL" "User-Agent: $AGENT" "X-XSRF-Token: $XSRF" -v
