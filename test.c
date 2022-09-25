@@ -7,60 +7,39 @@
 
 #include <uthash.h>
 
-#define PATH "data/co.xml"
+#define PATH "data/export.xml"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
 // TODO refactor \" to be in inTag()
 #define START "startDate=\""
 #define END "endDate=\""
+// TODO pass as argument to main
 #define CUTOFF "2022-09-01"
 
-struct duration {
-  char date[11];
-  int minutes;
-  UT_hash_handle hh;
-};
-
-void test(struct duration *durations);
-
-int date(char timestamp[]) {
+/* time */
+struct tm toTm(char timestamp[]) {
   struct tm tm;
   memset(&tm, 0, sizeof(tm));
   strptime(timestamp, "%Y-%m-%d %H:%M:%S", &tm);
+  return tm;
+}
+
+int minutes(char timestamp[]) {
+  struct tm tm = toTm(timestamp);
   int temp =  (tm.tm_hour * 60) + tm.tm_min;
-  /* printf("%d\n", temp); */
   return temp;
 }
 
-//int dateDiffInMin(char first[], char second[]) {}
-
-bool dateIsBefore(char test[], char cutoff[]) {
-  //return false;
-  printf(test);
-  printf(" - ");
-  printf(cutoff);
-  printf("\n");
-  struct tm first, second;
-
-  memset(&first, 0, sizeof(first));
-  memset(&second, 0, sizeof(second));
-  strptime(test, "%Y-%m-%d", &first);
-  strptime(cutoff, "%Y-%m-%d", &second);
-
-  time_t first_converted, second_converted;
-
-  first_converted = mktime(&first);
-  second_converted = mktime(&second);
-
-  double seconds = difftime(first_converted, second_converted);
-  /* printf("%f\n", seconds); */
-
-  bool isOver = seconds <= 0;
-
-  printf(isOver ? "true\n" : "false\n");
-
-  return seconds <= 0;
+bool dateIsBefore(char test[], struct tm cutoff) {
+  struct tm testTm = toTm(test);
+  return difftime(mktime(&testTm), mktime(&cutoff)) <= 0;
 }
 
+void justDate(char *date, char timestamp[]) {
+  memset(date, '\0', sizeof(date));
+  strncpy(date, timestamp, 10);
+}
+
+/* xml */
 bool in(char tag[], char end, char c, int* index) {
   if (*index == strlen(tag)) {
     if (c == end) {
@@ -81,92 +60,88 @@ bool inTag(char tag[], char c, int* index) {
   return in(tag, '"', c, index);
 }
 
+/* impl */
+struct duration {
+  char date[11];
+  int minutes;
+  UT_hash_handle hh;
+};
+
+void test(struct duration *allDurations);
+
 int main() {
-  char c;
-  FILE *fptr;
-  struct duration *durations = NULL;
+  FILE *filePointer;
+  char currentChar;
+
+  struct duration *allDurations = NULL;
+  struct tm cutoff = toTm(CUTOFF);
 
   // indices for chars of tags
-  int nodeIndex = 0;
-  int startIndex = 0;
-  int endIndex = 0;
+  int nodeIndex, startIndex, endIndex;
+  nodeIndex = startIndex = endIndex = 0;
   
-  // indices for chars of tag contents
-  int startFillIndex = 0;
-  int endFillIndex = 0;
+  // indices for chars of start and end tag contents
+  int startFillIndex, endFillIndex;
+  startFillIndex = endFillIndex = 0;
 
-  // strs for start and end date of node
-  char start[26];
-  char end[26];
-
-  // null terminated strings
+  // containers for start and end tag contents
+  char start[26], end[26];
   start[25] = end[25] = '\0';
 
-  if ((fptr = fopen(PATH, "r")) == NULL) {
+  if ((filePointer = fopen(PATH, "r")) == NULL) {
     printf("Error opening file");
     exit(1);
   }
   
-  while((c = fgetc(fptr)) != EOF) {
-    if (inNode(TYPE, c, &nodeIndex)) {
-      bool inStart = inTag(START, c, &startIndex);
-      bool inEnd = inTag(END, c, &endIndex);
+  while((currentChar = fgetc(filePointer)) != EOF) {
+    if (inNode(TYPE, currentChar, &nodeIndex)) {
+      bool inStart = inTag(START, currentChar, &startIndex);
+      bool inEnd = inTag(END, currentChar, &endIndex);
 
       // dates filled so check if in range and write difference to map
       if (startFillIndex == 25 && endFillIndex == 25) {
         startFillIndex = endFillIndex = 0;
-
-        char dest[11];
-        memset(dest, '\0', sizeof(dest));
-        strncpy(dest, start, 10);
         
-        if (dateIsBefore(dest, CUTOFF)) {
+        if (dateIsBefore(start, cutoff)) {
           continue;
         }
 
         struct duration *dur;
-        HASH_FIND_STR(durations, dest, dur);
+        char key[11];
+
+        justDate(key, start);
+        HASH_FIND_STR(allDurations, key, dur);
 
         if (dur == NULL) {
           dur = (struct duration *)malloc(sizeof *dur);
-          strcpy(dur->date, dest);
+          strcpy(dur->date, key);
           dur->minutes = 0;
         }
-
-        /* printf(start); */
-        /* printf("\n"); */
-
-        int temp = (date(end) - date(start));
-        /* printf("%d\n", temp); */
-
-        dur->minutes +=  temp;
-        /*  */
-        /* printf("%d\n", dur->minutes); */
-
-        HASH_ADD_STR(durations, date, dur);
+        dur->minutes += (minutes(end) - minutes(start));
+        HASH_ADD_STR(allDurations, date, dur);
       }
 
       if (inStart) {
-        start[startFillIndex] = c;
+        start[startFillIndex] = currentChar;
         startFillIndex += 1;
       }
 
       if (inEnd) {
-        end[endFillIndex] = c;
+        end[endFillIndex] = currentChar;
         endFillIndex += 1;
       }
     }
   }
-  test(durations);
-  fclose(fptr);
+  test(allDurations);
+  fclose(filePointer);
   return 0;
 }
 
 // TODO remove
-void test(struct duration *durations) {
+void test(struct duration *allDurations) {
   struct duration *dur;
 
-  HASH_FIND_STR(durations, "2022-09-01", dur);
+  HASH_FIND_STR(allDurations, "2022-09-05", dur);
 
   if (dur == NULL) {
     printf("Key not found");
