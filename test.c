@@ -73,7 +73,7 @@ void format(char date[], int seconds) {
   "\"validicEventId\": \"110867-%lu\","
   "\"customDescription\": null,"
   "\"utcOffset\": 120"
-  " }";
+  " }\n";
 
   gettimeofday(&now, NULL);
   long int ts = (long int)now.tv_sec * 1000 + now.tv_usec / 1000;
