@@ -14,7 +14,7 @@
 #define START "startDate=\""
 #define END "endDate=\""
 // TODO pass as argument to main
-#define CUTOFF "2022-09-11"
+#define CUTOFF "2022-09-19"
 
 
 /* map */
