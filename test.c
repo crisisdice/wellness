@@ -7,15 +7,15 @@
 
 #include <uthash.h>
 
-#define PATH "data/test.txt"
+#define PATH "data/co.xml"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
 // TODO refactor \" to be in inTag()
 #define START "startDate=\""
 #define END "endDate=\""
-#define CUTOFF ""
+#define CUTOFF "2022-09-01"
 
 struct duration {
-  char date[25];
+  char date[11];
   int minutes;
   UT_hash_handle hh;
 };
@@ -26,12 +26,39 @@ int date(char timestamp[]) {
   struct tm tm;
   memset(&tm, 0, sizeof(tm));
   strptime(timestamp, "%Y-%m-%d %H:%M:%S", &tm);
-  return (tm.tm_hour * 60) + tm.tm_min;
+  int temp =  (tm.tm_hour * 60) + tm.tm_min;
+  /* printf("%d\n", temp); */
+  return temp;
 }
 
+//int dateDiffInMin(char first[], char second[]) {}
+
 bool dateIsBefore(char test[], char cutoff[]) {
-  // TODO
-  return false;
+  //return false;
+  printf(test);
+  printf(" - ");
+  printf(cutoff);
+  printf("\n");
+  struct tm first, second;
+
+  memset(&first, 0, sizeof(first));
+  memset(&second, 0, sizeof(second));
+  strptime(test, "%Y-%m-%d", &first);
+  strptime(cutoff, "%Y-%m-%d", &second);
+
+  time_t first_converted, second_converted;
+
+  first_converted = mktime(&first);
+  second_converted = mktime(&second);
+
+  double seconds = difftime(first_converted, second_converted);
+  /* printf("%f\n", seconds); */
+
+  bool isOver = seconds <= 0;
+
+  printf(isOver ? "true\n" : "false\n");
+
+  return seconds <= 0;
 }
 
 bool in(char tag[], char end, char c, int* index) {
@@ -88,19 +115,34 @@ int main() {
       // dates filled so check if in range and write difference to map
       if (startFillIndex == 25 && endFillIndex == 25) {
         startFillIndex = endFillIndex = 0;
-        if (dateIsBefore(start, CUTOFF)) {
+
+        char dest[11];
+        memset(dest, '\0', sizeof(dest));
+        strncpy(dest, start, 10);
+        
+        if (dateIsBefore(dest, CUTOFF)) {
           continue;
         }
 
         struct duration *dur;
-        HASH_FIND_STR(durations, start, dur);
+        HASH_FIND_STR(durations, dest, dur);
 
         if (dur == NULL) {
           dur = (struct duration *)malloc(sizeof *dur);
-          strcpy(dur->date, start);
+          strcpy(dur->date, dest);
+          dur->minutes = 0;
         }
 
-        dur->minutes += (date(end) - date(start));
+        /* printf(start); */
+        /* printf("\n"); */
+
+        int temp = (date(end) - date(start));
+        /* printf("%d\n", temp); */
+
+        dur->minutes +=  temp;
+        /*  */
+        /* printf("%d\n", dur->minutes); */
+
         HASH_ADD_STR(durations, date, dur);
       }
 
@@ -124,11 +166,13 @@ int main() {
 void test(struct duration *durations) {
   struct duration *dur;
 
-  HASH_FIND_STR(durations, "2018-08-06 17:19:12 +0200", dur);
+  HASH_FIND_STR(durations, "2022-09-01", dur);
 
   if (dur == NULL) {
-    printf("whoops");
+    printf("Key not found");
+    return;
   }
 
   printf("%d\n", dur->minutes);
 }
+
