@@ -4,16 +4,25 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include <uthash.h>
 
-#define PATH "data/export.xml"
+#define PATH "data/fixed.xml"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
 // TODO refactor \" to be in inTag()
 #define START "startDate=\""
 #define END "endDate=\""
 // TODO pass as argument to main
-#define CUTOFF "2022-09-01"
+#define CUTOFF "2022-09-11"
+
+
+/* map */
+struct duration {
+  char date[11];
+  int seconds;
+  UT_hash_handle hh;
+};
 
 /* time */
 struct tm toTm(char timestamp[]) {
@@ -23,15 +32,8 @@ struct tm toTm(char timestamp[]) {
   return tm;
 }
 
-int minutes(char timestamp[]) {
-  struct tm tm = toTm(timestamp);
-  int temp =  (tm.tm_hour * 60) + tm.tm_min;
-  return temp;
-}
-
-bool dateIsBefore(char test[], struct tm cutoff) {
-  struct tm testTm = toTm(test);
-  return difftime(mktime(&testTm), mktime(&cutoff)) <= 0;
+int diff(struct tm date1, struct tm date2) {
+  return difftime(mktime(&date1), mktime(&date2));
 }
 
 void justDate(char *date, char timestamp[]) {
@@ -60,14 +62,31 @@ bool inTag(char tag[], char c, int* index) {
   return in(tag, '"', c, index);
 }
 
-/* impl */
-struct duration {
-  char date[11];
-  int minutes;
-  UT_hash_handle hh;
-};
+/* json */
+void format(char date[], int seconds) {
+  struct timeval now;
+  char template[] = "{ "
+  "\"timestamp\": \"%sT12:00:00\","
+  "\"eventDescriptor\": {"
+  " \"name\": \"WALKING\" },"
+  "\"value\": %d,"
+  "\"validicEventId\": \"110867-%lu\","
+  "\"customDescription\": null,"
+  "\"utcOffset\": 120"
+  " }";
 
-void test(struct duration *allDurations);
+  gettimeofday(&now, NULL);
+  long int ts = (long int)now.tv_sec * 1000 + now.tv_usec / 1000;
+  printf(template, date, seconds / 60, ts);
+}
+
+void printAll(struct duration *allDurations) {
+  struct duration *dur;
+
+  for (dur = allDurations; dur != NULL; dur = dur->hh.next) {
+    format(dur->date, dur-> seconds);
+  }
+}
 
 int main() {
   FILE *filePointer;
@@ -101,24 +120,31 @@ int main() {
       // dates filled so check if in range and write difference to map
       if (startFillIndex == 25 && endFillIndex == 25) {
         startFillIndex = endFillIndex = 0;
+
+        struct tm startDate, endDate;
+        startDate = toTm(start);
         
-        if (dateIsBefore(start, cutoff)) {
+        // is before cutoff
+        if (diff(startDate, cutoff) <= 0) {
           continue;
         }
 
         struct duration *dur;
         char key[11];
 
+        endDate = toTm(end);
         justDate(key, start);
+
         HASH_FIND_STR(allDurations, key, dur);
 
         if (dur == NULL) {
           dur = (struct duration *)malloc(sizeof *dur);
           strcpy(dur->date, key);
-          dur->minutes = 0;
+          dur->seconds = 0;
+          HASH_ADD_STR(allDurations, date, dur);
         }
-        dur->minutes += (minutes(end) - minutes(start));
-        HASH_ADD_STR(allDurations, date, dur);
+
+        dur->seconds += diff(endDate, startDate);
       }
 
       if (inStart) {
@@ -132,22 +158,8 @@ int main() {
       }
     }
   }
-  test(allDurations);
+  printAll(allDurations);
   fclose(filePointer);
   return 0;
-}
-
-// TODO remove
-void test(struct duration *allDurations) {
-  struct duration *dur;
-
-  HASH_FIND_STR(allDurations, "2022-09-05", dur);
-
-  if (dur == NULL) {
-    printf("Key not found");
-    return;
-  }
-
-  printf("%d\n", dur->minutes);
 }
 
