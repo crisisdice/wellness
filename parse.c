@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   char currentChar;
 
   if (argc == 1) {
-    printf("No cutoff specifiedi\n");
+    printf("No cutoff specified\n");
     exit(1);
   }
 

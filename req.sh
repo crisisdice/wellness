@@ -1,6 +1,6 @@
-CUTOFF="2022-09-20"
+CUTOFF="2022-10-16"
 
-PW_HASH='YWxleGFuZGVyZGFpbHkwMDFAZ21haWwuY29tOkhhbGwwVzNsdCE='
+PW_HASH='YWxleGFuZGVyZGFpbHkwMDFAZ21haWwuY29tOkg5ZzVYWko0ZDdoOVhNdiE='
 
 URL='https://amdocs.globalfitnesschallenge.com/v1'
 POST_ENDPOINT='/users/110867/events'
