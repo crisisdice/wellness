@@ -1,0 +1,6 @@
+
+watch for fs changes
+read new email into parser and extract attatchment
+call unzip on attatchment?
+mv attatchment/export.xml to data/export.xml
+run req.sh
