@@ -1,6 +1,6 @@
-CUTOFF="2022-10-16"
+CUTOFF="2023-04-22" # inclusive 
 
-PW_HASH='YWxleGFuZGVyZGFpbHkwMDFAZ21haWwuY29tOkg5ZzVYWko0ZDdoOVhNdiE='
+PW_HASH=$(cat .password)
 
 URL='https://amdocs.globalfitnesschallenge.com/v1'
 POST_ENDPOINT='/users/110867/events'
@@ -9,8 +9,8 @@ AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64 AppleWebKit/537.36 )KHTML, like 
 
 HEADERS=$(http GET $URL$AUTH_ENDPOINT "Authorization: Basic $PW_HASH" -v)
 
-TOKEN=$(echo $HEADERS | grep -oP '(?<=Set-Cookie: jwtToken=)[^;]*')
-XSRF=$(echo $HEADERS | grep -oP '(?<=Set-Cookie: XSRF-TOKEN=)[^;]*')
+TOKEN=$(echo $HEADERS | ggrep -oP '(?<=Set-Cookie: jwtToken=)[^;]*')
+XSRF=$(echo $HEADERS | ggrep -oP '(?<=Set-Cookie: XSRF-TOKEN=)[^;]*')
 COOKIE="jwtToken=$TOKEN"
 
 IFS=$'\n'

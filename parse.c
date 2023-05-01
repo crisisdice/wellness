@@ -6,7 +6,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include <uthash.h>
+#include "uthash.h"
 
 #define PATH "data/export.xml"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
