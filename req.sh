@@ -1,3 +1,4 @@
+# https://www.howtogeek.com/782514/how-to-use-set-and-pipefail-in-bash-scripts-on-linux/
 CUTOFF="2023-04-22" # inclusive 
 
 PW_HASH=$(cat .password)
