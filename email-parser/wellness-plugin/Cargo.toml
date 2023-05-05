@@ -9,5 +9,7 @@ authors = ["alexanderdaily <alexanderdaily001@gmail.com>"]
 crate-type = ["cdylib"]
 
 [dependencies]
+mail-parser = "0.8.2"
 rhai = { version = "1.11" }
 rhai-dylib = "0.1.6"
+zip-extract = "0.1.2"

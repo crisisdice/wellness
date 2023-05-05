@@ -1,32 +1,18 @@
+pub mod api;
+
 use std::fs::File;
 use std::io::Result;
 use std::io::prelude::*;
-use std::io::Cursor;
-use std::path::PathBuf;
-
-use mail_parser::*;
-use zip_extract;
 
 fn main() -> Result<()> {
-    // TODO watch for fs changes
+    // TODO pass email object to plugin
     // FIXME error handling and paths
-    let mut email = File::open("./emails/hde.eml")?;
-    let mut email_buffer = Vec::new();
+    let mut email = File::open("./src/emails/hde.eml")?;
+    let mut test = String::new();
 
-    email.read_to_end(&mut email_buffer)?;
+    email.read_to_string(&mut test)?;
 
-    let message = Message::parse(&email_buffer).unwrap();
-    let attatchment = message.attachment(0).unwrap();
-    let attatchment_bytes = attatchment.contents();
-
-    // File::create("./out.zip")?.write(attatchment_bytes)?;
-
-    // if (!zip) {}
-
-    let target = PathBuf::from("./out");
-    zip_extract::extract(Cursor::new(attatchment_bytes), &target, true).unwrap();
-
-    // TODO run req.sh
+    api::test(test)?;
 
     Ok(())
 }

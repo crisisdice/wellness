@@ -1,51 +1,32 @@
+//use std::io::Cursor;
+//use std::path::PathBuf;
+//use std::io::Result;
+
+use mail_parser::Message;
+//use zip_extract;
+
 use rhai_dylib::rhai::plugin::{
     mem, Dynamic, FnAccess, FnNamespace, ImmutableString, NativeCallContext, PluginFunction,
     RhaiResult, TypeId,
 };
 
-use rhai_dylib::rhai::{Map, Module, INT};
-
-#[derive(Clone)]
-pub struct MyPluginObjectInner {
-    inner: String,
-}
+use rhai_dylib::rhai::Module;
 
 // The plugin API from rhai can be used to create your plugin API.
 #[rhai_dylib::rhai::plugin::export_module]
 pub mod wellness_plugin {
-
-    // Implement a custom type.
-    type MyPluginObject = MyPluginObjectInner;
-
-    // Constructor for the custom type.
-    #[rhai_fn(global)]
-    pub fn new_plugin_object(inner: &str) -> MyPluginObject {
-        MyPluginObject {
-            inner: inner.to_string(),
-        }
-    }
-
-    /// A function for the custom type.
-    #[rhai_fn(global)]
-    pub fn display_inner(s: &mut MyPluginObject) {
-        println!("{}", s.inner);
-    }
-
     /// Printing to the console using Rust.
     #[rhai_fn(global)]
-    pub fn print_stuff() {
-        println!("Hello from plugin!");
-    }
+    //pub fn print_stuff(email: String) -> Result<()> {
+    pub fn print_stuff(email: String) {
+        let bytes = email.into_bytes();
+        let message = Message::parse(&bytes).unwrap();
+        // let attatchment = message.attachment(0).unwrap();
+        // let attatchment_bytes = attatchment.contents();
 
-    /// Computing something and returning a result.
-    #[rhai_fn(global)]
-    pub fn triple_add(a: INT, b: INT, c: INT) -> INT {
-        a + b + c
-    }
+        println!("{:?}", message.from());
 
-    /// Using Rhai types.
-    #[rhai_fn(global)]
-    pub fn get_property(m: &mut Map) -> String {
-        m.get("property").unwrap().clone_cast()
+        // let target = PathBuf::from("/out");
+        // zip_extract::extract(Cursor::new(attatchment_bytes), &target, true).unwrap();
     }
 }
