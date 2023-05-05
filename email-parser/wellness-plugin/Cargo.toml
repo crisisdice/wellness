@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rhai = { version = "1.11" }
+rhai-dylib = "0.1.8"
