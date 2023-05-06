@@ -1,6 +1,6 @@
 #!/bin/bash
 # https://www.howtogeek.com/782514/how-to-use-set-and-pipefail-in-bash-scripts-on-linux/
-CUTOFF="2023-04-22" # inclusive 
+#CUTOFF="2023-04-22" # inclusive 
 
 PW_HASH=$(cat /root/repos/wellness/.password)
 DEBUG="--offline"
@@ -18,10 +18,10 @@ XSRF=$(echo $HEADERS | $SEARCH -oP '(?<=Set-Cookie: XSRF-TOKEN=)[^;]*')
 COOKIE="jwtToken=$TOKEN"
 
 IFS=$'\n'
-declare -a ACTIONS=($(wellness-xml-parser $CUTOFF))
+declare -a ACTIONS=($(wellness-xml-parser $1))
 
 for BODY in "${ACTIONS[@]}"; do
-  echo $BODY | http $DEBUG POST $URL$POST_ENDPOINT "Authorization: Bearer $TOKEN" \
+  echo $BODY | http POST $URL$POST_ENDPOINT "Authorization: Bearer $TOKEN" \
     "Cookie: $COOKIE" "Origin: $URL" "User-Agent: $AGENT" "X-XSRF-Token: $XSRF" -v
 done
 
