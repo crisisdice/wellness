@@ -8,7 +8,7 @@
 
 #include "uthash.h"
 
-#define PATH "data/export.xml"
+#define PATH "/tmp/vsmtp/export.xml"
 #define TYPE "HKQuantityTypeIdentifierStepCount"
 // TODO refactor \" to be in inTag()
 #define START "startDate=\""
