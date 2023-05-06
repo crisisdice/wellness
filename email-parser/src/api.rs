@@ -6,6 +6,7 @@ use mail_parser::Message;
 use zip_extract;
 
 const TEMP_PATH: &str = "/tmp/vsmtp";
+const PRINT: bool = false;
 
 pub fn test(email: String) -> Result<()> {
     let bytes = email.into_bytes();
@@ -16,16 +17,18 @@ pub fn test(email: String) -> Result<()> {
     let target = PathBuf::from(TEMP_PATH);
     zip_extract::extract(Cursor::new(attatchment_bytes), &target, true).unwrap();
 
-    let mut export_file = File::open(format!("{TEMP_PATH}/export.xml"))?;
-    let mut export_data = String::new();
-
-    export_file.read_to_string(&mut export_data)?;
-
-    // TODO export xml data
-    // TODO format request
-    // TODO send request
-
-    print!("{}", export_data);
+    if PRINT {
+        let mut export_file = File::open(format!("{TEMP_PATH}/export.xml"))?;
+        let mut export_data = String::new();
+    
+        export_file.read_to_string(&mut export_data)?;
+    
+        // TODO export xml data
+        // TODO format request
+        // TODO send request
+    
+        print!("{}", export_data);
+    }
 
     Ok(())
 }
